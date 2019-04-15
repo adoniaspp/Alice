@@ -1,0 +1,6 @@
+database:
+  username: adonias
+  password: latpar69
+  host: localhost
+  port: 5432
+  databaseName: alice
