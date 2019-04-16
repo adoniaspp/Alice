@@ -12,8 +12,8 @@ class UnidadeController extends ResourceController{
     final query = Query<UnidadeTematica>(context)
         ..values.descricao = "Língua Portuguesa";
     final unidadeTematica = await query.insert();
-    Map<String, dynamic> map = unidadeTematica.asMap();
-    return Response.ok(jsonEncode(map));
+    //Map<String, dynamic> map = unidadeTematica.asMap();
+    return Response.ok(unidadeTematica);
   }
 
 }
