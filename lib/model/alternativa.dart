@@ -11,6 +11,9 @@ class _Alternativa{
 
   String descricao;
 
+  bool resposta;
+
   @Relate(#alternativas)
   Questao questao;
+
 }

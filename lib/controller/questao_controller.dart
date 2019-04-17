@@ -18,14 +18,25 @@ Future<Response> criarQuestao() async{
   final questao = await queryQuestao.insert();
 
   //Insere as alternativas das questões no BD
-
   for(var alternativa in bodyMap["alternativas"]){
-    var alternativaQuery = Query<Alternativa>(context)
-      ..values.descricao = alternativa.toString()
-      ..values.questao.id = questao.id;
-    var alternativaResult = await alternativaQuery.insert();
+      var alternativaQuery = Query<Alternativa>(context)
+        ..values.descricao = alternativa[0].toString()
+        ..values.resposta = alternativa[1].toString() == "false" ? false : true
+        ..values.questao.id = questao.id;
+      var alternativaResult = await alternativaQuery.insert();
   }
-  return Response.ok(questao);
+  //print(bodyMap["alternativas"][1][0]);
+  return Response.ok({"key": "value"});
 }
+
+@Operation.get()
+Future<Response> listarQuestoes() async{
+  return Response.ok({"key": "value"});
+}
+
+/*@Operation.get()
+Future<Response> obterQuestao() async{
+  return Response.ok({"key": "value"});
+}*/
 
 }
