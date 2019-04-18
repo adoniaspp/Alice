@@ -9,7 +9,7 @@ class QuestaoController extends ResourceController{
 @Operation.post()
 Future<Response> criarQuestao() async{
 
-  Map<String, dynamic> bodyMap = request.body.as();
+  final bodyMap = request.body.as();
 
   //Insere questão no BD
   final queryQuestao = Query<Questao>(context)
@@ -25,7 +25,7 @@ Future<Response> criarQuestao() async{
         ..values.questao.id = questao.id;
       var alternativaResult = await alternativaQuery.insert();
   }
-  //print(bodyMap["alternativas"][1][0]);
+  //print(bodyMap);
   return Response.ok({"key": "value"});
 }
 

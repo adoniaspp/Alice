@@ -31,8 +31,20 @@ class AliceChannel extends ApplicationChannel {
       });
     
     router
-      .route("/inserirunidade")
-      .link(()=> UnidadeController(context));
+      .route("/unidade/[:id]")
+      .link(()=> ManagedObjectController<UnidadeTematica>(context));
+
+    router
+        .route("/questionario/[:id]")
+        .link(()=> ManagedObjectController<Questionario>(context));
+
+    router
+        .route("/usuario/[:id]")
+        .link(()=> ManagedObjectController<Questionario>(context));
+
+    router
+        .route("/perfil/[:id]")
+        .link(()=> ManagedObjectController<Questionario>(context));
 
     router
         .route("/questao/[:id]")
