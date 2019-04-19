@@ -12,4 +12,5 @@ class _UnidadeTematica {
 
   ManagedSet<Questao> questoes;
 
+  bool situacao;
 }
