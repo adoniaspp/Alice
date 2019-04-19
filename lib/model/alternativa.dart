@@ -16,4 +16,5 @@ class _Alternativa{
   @Relate(#alternativas)
   Questao questao;
 
+  bool situacao;
 }

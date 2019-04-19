@@ -1,4 +1,3 @@
-
 import 'package:alice/alice.dart';
 import 'alternativa.dart';
 import 'unidade_tematica.dart';
@@ -19,6 +18,8 @@ class _Questao {
   UnidadeTematica unidadetematica;
 
   ManagedSet<QuestionarioQuestao> questionarioQuestoes;
+
+  bool situacao;
 
 
 }

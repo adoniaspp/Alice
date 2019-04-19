@@ -31,12 +31,45 @@ Future<Response> criarQuestao() async{
 
 @Operation.get()
 Future<Response> listarQuestoes() async{
-  return Response.ok({"key": "value"});
+  var query = Query<Questao>(context)
+    ..join(set: (q) => q.alternativas)
+        .returningProperties((a) => [a.id, a.descricao, a.resposta]);
+  var questoes = await query.fetch();
+  return Response.ok(questoes);
 }
 
-/*@Operation.get()
-Future<Response> obterQuestao() async{
+@Operation.get('id')
+Future<Response> obterQuestao(@Bind.path('id') int questaoId) async{
+  var query = Query<Questao>(context)
+    ..where((q) => q.id).equalTo(questaoId)
+    ..join(set: (q) => q.alternativas)
+        .returningProperties((a) => [a.id, a.descricao, a.resposta]);
+  var questoes = await query.fetch();
+  return Response.ok(questoes);
+}
+
+@Operation.put('id')
+Future<Response> atualizarQuestao(@Bind.path('id') int questaoId) async{
+  final bodyMap = request.body.as();
+  var query = Query<Questao>(context)
+    ..values.enunciado = bodyMap["enunciado"].toString()
+    ..values.unidadetematica.id = int.parse(bodyMap["unidadetematica"].toString())
+    ..where((q) => q.id).equalTo(questaoId);
+  final questao = await query.updateOne();
+
+  for(var alternativa in bodyMap["alternativas"]){
+    var alternativaQuery = Query<Alternativa>(context)
+      ..values.descricao = alternativa[1].toString()
+      ..values.resposta = alternativa[2].toString() == "false" ? false : true
+      ..where((a) => a.id).equalTo(int.parse(alternativa[0].toString()));
+    var alternativaResult = await alternativaQuery.updateOne();
+  }
+  return Response.ok(questao);
+}
+
+@Operation.delete('id')
+Future<Response> excluirQuestao(@Bind.query('id') int questaoId) async{
   return Response.ok({"key": "value"});
-}*/
+}
 
 }
