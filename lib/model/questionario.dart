@@ -9,6 +9,8 @@ class _Questionario{
   @primaryKey
   int id;
 
+  @Column(nullable: false)
+  @Validate.present(onInsert: true, onUpdate: false)
   String descricao;
 
   bool situacao;

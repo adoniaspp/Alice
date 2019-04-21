@@ -12,6 +12,10 @@ class _Perfil{
 
   bool situacao;
 
+  DateTime dataCadastro;
+
+  DateTime dataAtualizacao;
+
   ManagedSet<UsuarioPerfil> usuariosPerfis;
 
 }

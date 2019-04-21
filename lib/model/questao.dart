@@ -10,7 +10,15 @@ class _Questao {
   @primaryKey
   int id;
 
+  @Column(nullable: false)
+  @Validate.present(onInsert: true, onUpdate: false)
   String enunciado;
+
+  bool situacao;
+
+  DateTime dataCadastro;
+
+  DateTime dataAtualizacao;
 
   ManagedSet<Alternativa> alternativas;
 
@@ -19,7 +27,6 @@ class _Questao {
 
   ManagedSet<QuestionarioQuestao> questionarioQuestoes;
 
-  bool situacao;
 
 
 }

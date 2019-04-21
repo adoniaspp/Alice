@@ -10,24 +10,26 @@ class QuestaoController extends ResourceController{
 Future<Response> criarQuestao() async{
 
   final bodyMap = request.body.as();
+  final questao = await context.transaction((transaction) async {
+    //Insere questão no BD
+    final queryQuestao = Query<Questao>(transaction)
+      ..values.enunciado = bodyMap["enunciado"].toString()
+      ..values.situacao = true
+      ..values.unidadetematica.id = int.parse(
+          bodyMap["unidadetematica"].toString());
+    final questao = await queryQuestao.insert();
 
-  //Insere questão no BD
-  final queryQuestao = Query<Questao>(context)
-    ..values.enunciado = bodyMap["enunciado"].toString()
-    ..values.situacao = bodyMap["situacao"].toString() == "false" ? false : true
-    ..values.unidadetematica.id = int.parse(bodyMap["unidadetematica"].toString());
-  final questao = await queryQuestao.insert();
-
-  //Insere as alternativas das questões no BD
-  for(var alternativa in bodyMap["alternativas"]){
-      var alternativaQuery = Query<Alternativa>(context)
+    //Insere as alternativas das questões no BD
+    for (var alternativa in bodyMap["alternativas"]) {
+      var alternativaQuery = Query<Alternativa>(transaction)
         ..values.descricao = alternativa[0].toString()
         ..values.resposta = alternativa[1].toString() == "false" ? false : true
-        ..values.situacao = alternativa[2].toString() == "false" ? false : true
+        ..values.situacao = true
         ..values.questao.id = questao.id;
-      var alternativaResult = await alternativaQuery.insert();
-  }
-  //print(bodyMap);
+      await alternativaQuery.insert();
+      return questao;
+    }
+  });
   return Response.ok(questao);
 }
 
@@ -57,25 +59,54 @@ Future<Response> obterQuestao(@Bind.path('id') int questaoId) async{
 @Operation.put('id')
 Future<Response> atualizarQuestao(@Bind.path('id') int questaoId) async{
   final bodyMap = request.body.as();
-  var query = Query<Questao>(context)
-    ..values.enunciado = bodyMap["enunciado"].toString()
-    ..values.unidadetematica.id = int.parse(bodyMap["unidadetematica"].toString())
-    ..where((q) => q.id).equalTo(questaoId);
-  final questao = await query.updateOne();
+  final questao = await context.transaction((transaction) async {
 
-  for(var alternativa in bodyMap["alternativas"]){
-    var alternativaQuery = Query<Alternativa>(context)
-      ..values.descricao = alternativa[1].toString()
-      ..values.resposta = alternativa[2].toString() == "false" ? false : true
-      ..where((a) => a.id).equalTo(int.parse(alternativa[0].toString()));
-    var alternativaResult = await alternativaQuery.updateOne();
-  }
+    //Atualizar questão
+    var questaoQuery = Query<Questao>(transaction)
+      ..values.enunciado = bodyMap["enunciado"].toString()
+      ..values.unidadetematica.id = int.parse(
+          bodyMap["unidadetematica"].toString())
+      ..where((q) => q.id).equalTo(questaoId);
+    final questao = await questaoQuery.updateOne();
+
+    //Atualizar antigas questões
+    for (var alternativa in bodyMap["alternativas"]) {
+      var alternativaQuery = Query<Alternativa>(transaction)
+        ..values.descricao = alternativa[1].toString()
+        ..values.resposta = alternativa[2].toString() == "false" ? false : true
+        ..values.situacao = alternativa[3].toString() == "false" ? false : true
+        ..where((a) => a.id).equalTo(int.parse(alternativa[0].toString()));
+      await alternativaQuery.updateOne();
+    }
+
+    if((bodyMap["novasAlternativas"] as List).isNotEmpty){
+      for (var alternativa in bodyMap["novasAlternativas"]) {
+        var alternativaQuery = Query<Alternativa>(transaction)
+          ..values.descricao = alternativa[0].toString()
+          ..values.resposta = alternativa[1].toString() == "false" ? false : true
+          ..values.situacao = true
+          ..values.questao.id = questaoId;
+        await alternativaQuery.insert();
+      }
+    }
+    return questao;
+  });
   return Response.ok(questao);
 }
 
 @Operation.delete('id')
-Future<Response> excluirQuestao(@Bind.query('id') int questaoId) async{
-  return Response.ok({"key": "value"});
+Future<Response> excluirQuestao(@Bind.path('id') int questaoId) async{
+  final questao = await context.transaction((transaction) async{
+    var queryQuestoes = Query<Questao>(transaction)
+      ..values.situacao = false
+      ..where((q) => q.id).equalTo(questaoId);
+    final questao = await queryQuestoes.updateOne();
+    var queryAlternativas = Query<Alternativa>(transaction)
+      ..values.situacao = false
+      ..where((a) => a.questao.id).equalTo(questaoId);
+    await queryAlternativas.update();
+    return questao;
+  });
+  return Response.ok(questao);
 }
-
 }

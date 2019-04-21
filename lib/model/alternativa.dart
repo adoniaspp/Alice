@@ -9,12 +9,18 @@ class _Alternativa{
   @primaryKey
   int id;
 
+  @Validate.present(onInsert: true)
   String descricao;
 
   bool resposta;
 
+  bool situacao;
+
+  DateTime dataCadastro;
+
+  DateTime dataAtualizacao;
+
   @Relate(#alternativas)
   Questao questao;
 
-  bool situacao;
 }

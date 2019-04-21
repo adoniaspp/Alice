@@ -10,6 +10,10 @@ class _UnidadeTematica {
 
   String descricao;
 
+  DateTime dataCadastro;
+
+  DateTime dataAtualizacao;
+
   ManagedSet<Questao> questoes;
 
 }
