@@ -8,6 +8,7 @@ export 'dart:convert';
 export 'dart:io';
 
 export 'package:aqueduct/aqueduct.dart';
+export 'package:aqueduct/managed_auth.dart';
 export 'package:alice/model/questao.dart';
 export 'package:alice/model/alternativa.dart';
 export 'package:alice/model/unidade_tematica.dart';
