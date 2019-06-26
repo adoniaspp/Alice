@@ -21,6 +21,6 @@ class _Alternativa{
   DateTime dataAtualizacao;
 
   @Relate(#alternativas)
-  Questao questao;
+  QuestaoObjetiva questaoObjetiva;
 
 }

@@ -1,7 +1,4 @@
 import 'package:alice/alice.dart';
-import 'alternativa.dart';
-import 'unidade_tematica.dart';
-import 'questionario_questao.dart';
 
 class Questao extends ManagedObject<_Questao> implements _Questao{}
 
@@ -20,10 +17,13 @@ class _Questao {
 
   DateTime dataAtualizacao;
 
-  ManagedSet<Alternativa> alternativas;
+  QuestaoObjetiva questaoObjetiva;
 
   @Relate(#questoes)
   UnidadeTematica unidadetematica;
+
+  @Relate(#questoes)
+  TipoQuestao tipoQuestao;
 
   ManagedSet<QuestionarioQuestao> questionarioQuestoes;
 
