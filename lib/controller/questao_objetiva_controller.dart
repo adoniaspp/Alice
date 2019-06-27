@@ -19,13 +19,18 @@ Future<Response> criarQuestao() async{
           bodyMap["unidadetematica"].toString());
     final questao = await queryQuestao.insert();
 
+      //Insere questãoObjetiva no BD
+    final queryQuestaoObjetiva = Query<QuestaoObjetiva>(transaction)
+        ..values.situacao = true;
+    final questaoObjetiva = await queryQuestaoObjetiva.insert();
+
     //Insere as alternativas das questões no BD
     for (var alternativa in bodyMap["alternativas"]) {
       var alternativaQuery = Query<Alternativa>(transaction)
         ..values.descricao = alternativa[0].toString()
         ..values.resposta = alternativa[1].toString() == "false" ? false : true
         ..values.situacao = true
-        ..values.questao.id = questao.id;
+        ..values.questaoObjetiva.id = questaoObjetiva.id;
       await alternativaQuery.insert();
       return questao;
     }
@@ -37,7 +42,9 @@ Future<Response> criarQuestao() async{
 Future<Response> listarQuestoes() async{
   var query = Query<Questao>(context)
     ..where((q) => q.situacao).equalTo(true);
-    Query<Alternativa> alternativaSubQuery = query.join(set: (q) => q.alternativas)
+  Query<QuestaoObjetiva> questaoObjetiva = query.join(object: (q) => q.questaoObjetiva)
+    ..where((qo) => qo.situacao).equalTo(true);
+  Query<Alternativa> alternativaSubQuery = questaoObjetiva.join(set: (qo) => qo.alternativas)
       ..where((a) => a.situacao).equalTo(true)
       ..returningProperties((a) => [a.id, a.descricao, a.resposta]);
   var questoes = await query.fetch();

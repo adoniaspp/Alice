@@ -7,6 +7,8 @@ class _QuestaoObjetiva{
   @primaryKey
   int id;
 
+  bool situacao;
+
   ManagedSet<Alternativa> alternativas;
 
   @Relate(#questaoObjetiva)
