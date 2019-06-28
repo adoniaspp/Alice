@@ -12,17 +12,17 @@ Future<Response> criarQuestao() async{
   final bodyMap = request.body.as();
   final questao = await context.transaction((transaction) async {
     //Insere questão no BD
-    final queryQuestao = Query<Questao>(transaction)
+    var queryQuestao = Query<Questao>(transaction)
       ..values.enunciado = bodyMap["enunciado"].toString()
       ..values.situacao = true
       ..values.unidadetematica.id = int.parse(
           bodyMap["unidadetematica"].toString());
-    final questao = await queryQuestao.insert();
+    var questao = await queryQuestao.insert();
 
       //Insere questãoObjetiva no BD
-    final queryQuestaoObjetiva = Query<QuestaoObjetiva>(transaction)
+    var queryQuestaoObjetiva = Query<QuestaoObjetiva>(transaction)
         ..values.situacao = true;
-    final questaoObjetiva = await queryQuestaoObjetiva.insert();
+    var questaoObjetiva = await queryQuestaoObjetiva.insert();
 
     //Insere as alternativas das questões no BD
     for (var alternativa in bodyMap["alternativas"]) {
@@ -56,10 +56,12 @@ Future<Response> obterQuestao(@Bind.path('id') int questaoId) async{
   var query = Query<Questao>(context)
     ..where((q) => q.id).equalTo(questaoId)
     ..where((q) => q.situacao).equalTo(true);
-    Query<Alternativa> alternativaSubQuery = query.join(set: (q) => q.alternativas)
+  Query<QuestaoObjetiva> questaoObjetiva = query.join(object: (q) => q.questaoObjetiva)
+    ..where((qo) => qo.situacao).equalTo(true);
+  Query<Alternativa> alternativaSubQuery = questaoObjetiva.join(set: (qo) => qo.alternativas)
     ..where((a) => a.situacao).equalTo(true)
     ..returningProperties((a) => [a.id, a.descricao, a.resposta]);
-  var questoes = await query.fetch();
+  var questoes = await query.fetchOne();
   return Response.ok(questoes);
 }
 
@@ -74,9 +76,9 @@ Future<Response> atualizarQuestao(@Bind.path('id') int questaoId) async{
       ..values.unidadetematica.id = int.parse(
           bodyMap["unidadetematica"].toString())
       ..where((q) => q.id).equalTo(questaoId);
-    final questao = await questaoQuery.updateOne();
+    var questao = await questaoQuery.updateOne();
 
-    //Atualizar antigas questões
+    //Atualizar antigas alternativas
     for (var alternativa in bodyMap["alternativas"]) {
       var alternativaQuery = Query<Alternativa>(transaction)
         ..values.descricao = alternativa[1].toString()
@@ -86,13 +88,18 @@ Future<Response> atualizarQuestao(@Bind.path('id') int questaoId) async{
       await alternativaQuery.updateOne();
     }
 
+    var questaoObjetivaQuery = Query<QuestaoObjetiva>(transaction)
+      ..where((qo) => qo.questao.id).equalTo(questaoId)
+      ..returningProperties((qo) => [qo.id]);
+    var questaoObjetiva = await questaoObjetivaQuery.fetchOne();
+
     if((bodyMap["novasAlternativas"] as List).isNotEmpty){
       for (var alternativa in bodyMap["novasAlternativas"]) {
         var alternativaQuery = Query<Alternativa>(transaction)
           ..values.descricao = alternativa[0].toString()
           ..values.resposta = alternativa[1].toString() == "false" ? false : true
           ..values.situacao = true
-          ..values.questao.id = questaoId;
+          ..values.questaoObjetiva.id = questaoObjetiva.id;
         await alternativaQuery.insert();
       }
     }
@@ -107,10 +114,16 @@ Future<Response> excluirQuestao(@Bind.path('id') int questaoId) async{
     var queryQuestoes = Query<Questao>(transaction)
       ..values.situacao = false
       ..where((q) => q.id).equalTo(questaoId);
-    final questao = await queryQuestoes.updateOne();
+    var questao = await queryQuestoes.updateOne();
+
+    var queryQuestaoObjetiva = Query<QuestaoObjetiva>(transaction)
+      ..values.situacao = false
+      ..where((qo) => qo.questao.id).equalTo(questaoId);
+    var questaoObjetiva = await queryQuestaoObjetiva.updateOne();
+
     var queryAlternativas = Query<Alternativa>(transaction)
       ..values.situacao = false
-      ..where((a) => a.questao.id).equalTo(questaoId);
+      ..where((a) => a.questaoObjetiva.id).equalTo(questaoObjetiva.id);
     await queryAlternativas.update();
     return questao;
   });
