@@ -40,11 +40,11 @@ class AliceChannel extends ApplicationChannel {
 
     router
         .route("/usuario/[:id]")
-        .link(()=> ManagedObjectController<Questionario>(context));
+        .link(()=> ManagedObjectController<Usuario>(context));
 
     router
         .route("/perfil/[:id]")
-        .link(()=> ManagedObjectController<Questionario>(context));
+        .link(()=> ManagedObjectController<Perfil>(context));
 
     router
         .route("/questaoobjetiva/[:id]")
