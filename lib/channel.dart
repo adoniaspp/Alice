@@ -30,9 +30,13 @@ class AliceChannel extends ApplicationChannel {
         return Response.ok({"key": "value"});
       });
     
-    router
+    router  //ok
       .route("/unidade/[:id]")
       .link(()=> ManagedObjectController<UnidadeTematica>(context));
+
+    router
+      .route("/tipoquestao/[:id]")
+      .link(()=> ManagedObjectController<TipoQuestao>(context));
 
     router
         .route("/questionario/[:id]")
@@ -45,10 +49,6 @@ class AliceChannel extends ApplicationChannel {
     router
         .route("/perfil/[:id]")
         .link(()=> ManagedObjectController<Perfil>(context));
-
-    router
-        .route("/questaoobjetiva/[:id]")
-        .link(()=> QuestaoObjetivaController(context));
 
     router
         .route("/questao/[:id]")

@@ -2,7 +2,7 @@ import 'package:alice/alice.dart';
 
 class QuestaoObjetivaController extends ResourceController{
 
-  QuestaoObjetivaController(this.context){}
+  QuestaoObjetivaController(this.context);
 
   ManagedContext context;
 
