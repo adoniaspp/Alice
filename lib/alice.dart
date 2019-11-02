@@ -20,5 +20,7 @@ export 'package:alice/model/usuario.dart';
 export 'package:alice/model/usuario_perfil.dart';
 export 'package:alice/model/questao_objetiva.dart';
 export 'package:alice/controller/questao_objetiva_controller.dart';
+export 'package:alice/controller/alternativa_controller.dart';
+
 
 export 'channel.dart';
