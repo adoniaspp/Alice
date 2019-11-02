@@ -54,14 +54,6 @@ class AliceChannel extends ApplicationChannel {
         .route("/questao/[:id]")
         .link(()=> ManagedObjectController<Questao>(context));
 
-    router
-        .route("/questao/:questaoId/questaoobjetiva/[:id]")
-        .link(() => QuestaoObjetivaController(context));
-    
-    router
-        .route("/questaoobjetiva/:objetivaId/alternativas/[:id]")
-        .link(() => AlternativasController(context));
-
     return router;
   }
 }
