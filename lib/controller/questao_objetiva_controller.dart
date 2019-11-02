@@ -6,30 +6,58 @@ class QuestaoObjetivaController extends ResourceController{
 
   ManagedContext context;
 
-@Operation.post('questaoId')
-Future<Response> criarQuestao(@Bind.path('questaoId') int idQuestao) async{
+@Operation.post()
+Future<Response> criarQuestao() async{
 
-  final questaoObjetiva = await context.transaction((transaction) async {
-    final queryQuestao = Query<QuestaoObjetiva>(transaction)
-      ..values.questao.id = idQuestao;
-    await queryQuestao.insert();
+  final bodyMap = request.body.as();
+  final questao = await context.transaction((transaction) async {
+    //Insere questão no BD
+    final queryQuestao = Query<Questao>(transaction)
+      ..values.enunciado = bodyMap["enunciado"].toString()
+      ..values.situacao = true
+      ..values.unidadetematica.id = int.parse(
+          bodyMap["unidadetematica"].toString());
+    final questao = await queryQuestao.insert();
+
+      //Insere questãoObjetiva no BD
+    final queryQuestaoObjetiva = Query<QuestaoObjetiva>(transaction);
+    final questaoObjetiva = await queryQuestaoObjetiva.insert();
+
+    //Insere as alternativas das questões no BD
+    for (var alternativa in bodyMap["alternativas"]) {
+      final alternativaQuery = Query<Alternativa>(transaction)
+        ..values.descricao = alternativa[0].toString()
+        ..values.resposta = alternativa[1].toString() == "false" ? false : true
+        ..values.situacao = true
+        ..values.questaoObjetiva.id = questaoObjetiva.id;
+      await alternativaQuery.insert();
+      return questao;
+    }
   });
-  return Response.ok(questaoObjetiva);
+  return Response.ok(questao);
 }
 
-@Operation.get('questaoId')
-Future<Response> listarQuestoesObjetivas(@Bind.path('questaoId') int idQuestao) async{
-  final query = Query<QuestaoObjetiva>(context)
-    ..where((q) => q.questao.id).equalTo(idQuestao);
+@Operation.get()
+Future<Response> listarQuestoes() async{
+  final query = Query<Questao>(context)
+    ..where((q) => q.situacao).equalTo(true);
+  final Query<QuestaoObjetiva> questaoObjetiva = query.join(object: (q) => q.questaoObjetiva);
+  final Query<Alternativa> alternativaSubQuery = questaoObjetiva.join(set: (qo) => qo.alternativas)
+      ..where((a) => a.situacao).equalTo(true)
+      ..returningProperties((a) => [a.id, a.descricao, a.resposta]);
   final questoes = await query.fetch();
   return Response.ok(questoes);
 }
 
-@Operation.get('questaoId', 'objetivaId')
-Future<Response> obterQuestao(@Bind.path('id') int questaoId, @Bind.path('objetivaId') int objetivaId) async{
-  final query = Query<QuestaoObjetiva>(context)
-    ..where((q) => q.id).equalTo(objetivaId)
-    ..where((q) => q.questao.id).equalTo(questaoId);
+@Operation.get('id')
+Future<Response> obterQuestao(@Bind.path('id') int questaoId) async{
+  var query = Query<Questao>(context)
+    ..where((q) => q.id).equalTo(questaoId)
+    ..where((q) => q.situacao).equalTo(true);
+  final Query<QuestaoObjetiva> questaoObjetiva = query.join(object: (q) => q.questaoObjetiva);
+  Query<Alternativa> alternativaSubQuery = questaoObjetiva.join(set: (qo) => qo.alternativas)
+    ..where((a) => a.situacao).equalTo(true)
+    ..returningProperties((a) => [a.id, a.descricao, a.resposta]);
   final questoes = await query.fetchOne();
   return Response.ok(questoes);
 }
@@ -40,16 +68,16 @@ Future<Response> atualizarQuestao(@Bind.path('id') int questaoId) async{
   final questao = await context.transaction((transaction) async {
 
     //Atualizar questão
-    var questaoQuery = Query<Questao>(transaction)
+    final questaoQuery = Query<Questao>(transaction)
       ..values.enunciado = bodyMap["enunciado"].toString()
       ..values.unidadetematica.id = int.parse(
           bodyMap["unidadetematica"].toString())
       ..where((q) => q.id).equalTo(questaoId);
-    var questao = await questaoQuery.updateOne();
+    final questao = await questaoQuery.updateOne();
 
     //Atualizar antigas alternativas
     for (var alternativa in bodyMap["alternativas"]) {
-      var alternativaQuery = Query<Alternativa>(transaction)
+      final alternativaQuery = Query<Alternativa>(transaction)
         ..values.descricao = alternativa[1].toString()
         ..values.resposta = alternativa[2].toString() == "false" ? false : true
         ..values.situacao = alternativa[3].toString() == "false" ? false : true
@@ -57,14 +85,14 @@ Future<Response> atualizarQuestao(@Bind.path('id') int questaoId) async{
       await alternativaQuery.updateOne();
     }
 
-    var questaoObjetivaQuery = Query<QuestaoObjetiva>(transaction)
+    final questaoObjetivaQuery = Query<QuestaoObjetiva>(transaction)
       ..where((qo) => qo.questao.id).equalTo(questaoId)
       ..returningProperties((qo) => [qo.id]);
-    var questaoObjetiva = await questaoObjetivaQuery.fetchOne();
+    final questaoObjetiva = await questaoObjetivaQuery.fetchOne();
 
     if((bodyMap["novasAlternativas"] as List).isNotEmpty){
       for (var alternativa in bodyMap["novasAlternativas"]) {
-        var alternativaQuery = Query<Alternativa>(transaction)
+        final alternativaQuery = Query<Alternativa>(transaction)
           ..values.descricao = alternativa[0].toString()
           ..values.resposta = alternativa[1].toString() == "false" ? false : true
           ..values.situacao = true
@@ -80,16 +108,16 @@ Future<Response> atualizarQuestao(@Bind.path('id') int questaoId) async{
 @Operation.delete('id')
 Future<Response> excluirQuestao(@Bind.path('id') int questaoId) async{
   final questao = await context.transaction((transaction) async{
-    var queryQuestoes = Query<Questao>(transaction)
+    final queryQuestoes = Query<Questao>(transaction)
       ..values.situacao = false
       ..where((q) => q.id).equalTo(questaoId);
-    var questao = await queryQuestoes.updateOne();
+    final questao = await queryQuestoes.updateOne();
 
-    var queryQuestaoObjetiva = Query<QuestaoObjetiva>(transaction)
+    final queryQuestaoObjetiva = Query<QuestaoObjetiva>(transaction)
       ..where((qo) => qo.questao.id).equalTo(questaoId);
-    var questaoObjetiva = await queryQuestaoObjetiva.updateOne();
+    final questaoObjetiva = await queryQuestaoObjetiva.updateOne();
 
-    var queryAlternativas = Query<Alternativa>(transaction)
+    final queryAlternativas = Query<Alternativa>(transaction)
       ..values.situacao = false
       ..where((a) => a.questaoObjetiva.id).equalTo(questaoObjetiva.id);
     await queryAlternativas.update();
