@@ -6,62 +6,31 @@ class QuestaoObjetivaController extends ResourceController{
 
   ManagedContext context;
 
-@Operation.post()
-Future<Response> criarQuestao() async{
+@Operation.post('questaoId')
+Future<Response> criarQuestao(@Bind.path('questaoId') int idQuestao) async{
 
-  final bodyMap = request.body.as();
-  final questao = await context.transaction((transaction) async {
-    //Insere questão no BD
-    var queryQuestao = Query<Questao>(transaction)
-      ..values.enunciado = bodyMap["enunciado"].toString()
-      ..values.situacao = true
-      ..values.unidadetematica.id = int.parse(
-          bodyMap["unidadetematica"].toString());
-    var questao = await queryQuestao.insert();
-
-      //Insere questãoObjetiva no BD
-    var queryQuestaoObjetiva = Query<QuestaoObjetiva>(transaction)
-        ..values.situacao = true;
-    var questaoObjetiva = await queryQuestaoObjetiva.insert();
-
-    //Insere as alternativas das questões no BD
-    for (var alternativa in bodyMap["alternativas"]) {
-      var alternativaQuery = Query<Alternativa>(transaction)
-        ..values.descricao = alternativa[0].toString()
-        ..values.resposta = alternativa[1].toString() == "false" ? false : true
-        ..values.situacao = true
-        ..values.questaoObjetiva.id = questaoObjetiva.id;
-      await alternativaQuery.insert();
-      return questao;
-    }
+  final questaoObjetiva = await context.transaction((transaction) async {
+    final queryQuestao = Query<QuestaoObjetiva>(transaction)
+      ..values.questao.id = idQuestao;
+    await queryQuestao.insert();
   });
-  return Response.ok(questao);
+  return Response.ok(questaoObjetiva);
 }
 
-@Operation.get()
-Future<Response> listarQuestoes() async{
-  var query = Query<Questao>(context)
-    ..where((q) => q.situacao).equalTo(true);
-  Query<QuestaoObjetiva> questaoObjetiva = query.join(object: (q) => q.questaoObjetiva)
-    ..where((qo) => qo.situacao).equalTo(true);
-  Query<Alternativa> alternativaSubQuery = questaoObjetiva.join(set: (qo) => qo.alternativas)
-      ..where((a) => a.situacao).equalTo(true)
-      ..returningProperties((a) => [a.id, a.descricao, a.resposta]);
-  var questoes = await query.fetch();
+@Operation.get('questaoId')
+Future<Response> listarQuestoesObjetivas(@Bind.path('questaoId') int idQuestao) async{
+  final query = Query<QuestaoObjetiva>(context)
+    ..where((q) => q.questao.id).equalTo(idQuestao);
+  final questoes = await query.fetch();
   return Response.ok(questoes);
 }
 
-@Operation.get('id')
-Future<Response> obterQuestao(@Bind.path('id') int questaoId) async{
-  var query = Query<Questao>(context)
-    ..where((q) => q.id).equalTo(questaoId)
-    ..where((q) => q.situacao).equalTo(true);
-  Query<QuestaoObjetiva> questaoObjetiva = query.join(object: (q) => q.questaoObjetiva)
-    ..where((qo) => qo.situacao).equalTo(true);
-  Query<Alternativa> alternativaSubQuery = questaoObjetiva.join(set: (qo) => qo.alternativas)
-    ..where((a) => a.situacao).equalTo(true)
-    ..returningProperties((a) => [a.id, a.descricao, a.resposta]);
-  var questoes = await query.fetchOne();
+@Operation.get('questaoId', 'objetivaId')
+Future<Response> obterQuestao(@Bind.path('id') int questaoId, @Bind.path('objetivaId') int objetivaId) async{
+  final query = Query<QuestaoObjetiva>(context)
+    ..where((q) => q.id).equalTo(objetivaId)
+    ..where((q) => q.questao.id).equalTo(questaoId);
+  final questoes = await query.fetchOne();
   return Response.ok(questoes);
 }
 
